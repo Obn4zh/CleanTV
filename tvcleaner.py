@@ -564,7 +564,10 @@ class App(tk.Tk):
             else:
                 self.log("— Установка лаунчера")
                 skip = core.apk_path(cfg).exists()
-                args = ["-TvHost", host] + (["-HomeKeyService"] if do_gear else [])
+                # -RestoreKeyServices: other apps that switch accessibility services on or off (remote
+                # control apps, button mappers) or a force stop can drop the key service; with this the
+                # launcher puts it back the next time Home opens.
+                args = ["-TvHost", host] + (["-HomeKeyService", "-RestoreKeyServices"] if do_gear else [])
                 rc, out = self.stream(core.ps_script(cfg, "launcher/build-and-install.ps1", *args),
                                       env=core.script_env(cfg, skip_build=skip),
                                       cwd=str(Path(cfg["repo"]) / "launcher"))
@@ -579,7 +582,7 @@ class App(tk.Tk):
                     if len(dock) > 4:
                         theme["columns"] = len(dock)
                 if do_gear:
-                    theme.update(settings_key_keycodes=[83], settings_key_panel=True)
+                    theme.update(settings_key_keycodes=[83], settings_key_panel=True, restore_key_services=True)
                 tdir = pdir / "theme"
                 tdir.mkdir(parents=True, exist_ok=True)
                 (tdir / "config.json").write_text(json.dumps(theme, indent=2), encoding="utf-8")
